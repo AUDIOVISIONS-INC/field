@@ -1,0 +1,372 @@
+
+:root{
+  --copper:#C16236; --copper-lo:#E09260; --copper-hi:#FAB88E; --on-copper:#1A1108;
+  --ok:#2E7D3A; --ok-bg:#E6F3E8; --warn:#B8791A; --warn-bg:#FBF0DC; --err:#B5341A;
+  --mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+}
+html[data-theme="light"]{
+  --bg:#F4F2EF; --surf:#FFFFFF; --surf2:#FAF8F5; --surf3:#EFEBE5;
+  --ink:#1A1611; --ink2:#5C554B; --ink3:#8C8377; --line:#DAD4CB; --line2:#C3BBAF;
+  --row-done:#F1F7F1;
+}
+html[data-theme="dark"]{
+  --bg:#17140F; --surf:#201D1A; --surf2:#2A2622; --surf3:#37322C;
+  --ink:#F0EEE9; --ink2:#BFBCB6; --ink3:#868686; --line:#302C27; --line2:#4A443D;
+  --row-done:#1C2A1E; --ok:#7FBF8A; --ok-bg:#1C2A1E; --warn:#E3B95E; --warn-bg:#2E2718; --err:#D97F6C;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--ink);
+  font-family:var(--sans);font-size:16px;-webkit-text-size-adjust:100%;overscroll-behavior-y:none;}
+body{padding-bottom:env(safe-area-inset-bottom);}
+button,input,select,textarea{font:inherit;color:inherit;}
+button{cursor:pointer;}
+
+/* ---------- header ---------- */
+header{position:sticky;top:0;z-index:30;background:var(--surf);border-bottom:1px solid var(--line);
+  padding:calc(8px + env(safe-area-inset-top)) 12px 0;}
+.hrow{display:flex;align-items:center;gap:10px;}
+.mark{width:30px;height:30px;border-radius:4px;background:linear-gradient(135deg,#B06A3E,#C88455 30%,#E2A87C 52%,#C77B4E 70%,#9A5A34);
+  color:var(--on-copper);display:grid;place-items:center;font-weight:800;font-size:12px;letter-spacing:.5px;flex:0 0 auto;}
+.titles{min-width:0;flex:1;}
+.t1{font-weight:700;font-size:15px;letter-spacing:.2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.t2{font-size:11.5px;color:var(--ink2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:.3px;}
+.iconbtn{background:var(--surf2);border:1px solid var(--line);border-radius:8px;width:40px;height:40px;
+  display:grid;place-items:center;font-size:17px;flex:0 0 auto;}
+.iconbtn:active{background:var(--surf3);}
+
+.prog{margin:9px 0 8px;}
+.pbar{height:9px;border-radius:99px;background:var(--surf3);overflow:hidden;}
+.pfill{height:100%;background:linear-gradient(90deg,var(--copper),var(--copper-lo));border-radius:99px;
+  transition:width .25s ease;}
+.pmeta{display:flex;justify-content:space-between;align-items:baseline;margin-top:5px;font-size:12px;color:var(--ink2);}
+.pmeta b{font-size:15px;color:var(--ink);font-family:var(--mono);}
+
+/* ---------- filters ---------- */
+.seg{display:flex;gap:0;background:var(--surf3);border-radius:9px;padding:3px;margin-bottom:8px;}
+.seg button{flex:1;border:0;background:transparent;border-radius:7px;padding:9px 4px;font-size:13px;
+  font-weight:600;color:var(--ink2);white-space:nowrap;}
+.seg button[aria-pressed="true"]{background:var(--surf);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.14);}
+.filters{display:flex;gap:7px;padding-bottom:9px;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.filters::-webkit-scrollbar{display:none;}
+.filters select,.filters input{background:var(--surf2);border:1px solid var(--line);border-radius:8px;
+  padding:9px 10px;font-size:13.5px;flex:0 0 auto;max-width:46vw;}
+.filters input{flex:1 1 130px;min-width:120px;}
+
+.rooms{display:flex;align-items:center;gap:8px;padding:0 0 9px;font-size:12px;color:var(--ink3);}
+.mini{background:var(--surf2);border:1px solid var(--line);border-radius:8px;padding:0 13px;
+  min-height:42px;font-size:13px;font-weight:600;color:var(--ink2);white-space:nowrap;}
+.mini:active{background:var(--surf3);}
+.mini:disabled{opacity:.4;}
+
+/* live duplicate check on a hand-typed cable tag */
+.tagin{font-family:var(--mono)!important;font-size:16px!important;font-weight:700;letter-spacing:-.2px;
+  margin-bottom:6px!important;}
+.tagin.dup{border-color:var(--err)!important;}
+.tagmsg{font-size:12px;line-height:1.45;color:var(--ink3);margin:0 0 14px;padding:0 2px;}
+.tagmsg.ok{color:var(--ok);font-weight:600;}
+.tagmsg.dup{color:var(--err);font-weight:600;background:var(--warn-bg);border-radius:8px;padding:9px 11px;}
+html[data-theme="dark"] .tagmsg.dup{background:#331A15;}
+
+/* ---------- list ---------- */
+main{padding:10px 10px 120px;}
+.grp{margin-bottom:12px;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surf);}
+.gh{display:flex;align-items:center;gap:9px;padding:11px 12px;background:var(--surf2);
+  border-bottom:1px solid var(--line);position:sticky;top:0;}
+.gh .no{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--copper);flex:0 0 auto;}
+/* a room the drawing never had — the office assigns its number on the red-line pass */
+.gh .no.new{font-size:10px;letter-spacing:.5px;background:var(--ok-bg);color:var(--ok);
+  padding:2px 6px;border-radius:5px;}
+.gh .nm{font-weight:700;font-size:14px;letter-spacing:.3px;text-transform:uppercase;flex:1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gh .ct{font-family:var(--mono);font-size:12.5px;color:var(--ink2);flex:0 0 auto;}
+.gh .ct.done{color:var(--ok);font-weight:700;}
+.gh .caret{color:var(--ink3);font-size:12px;width:14px;text-align:center;}
+
+.row{display:flex;align-items:stretch;border-top:1px solid var(--line);background:var(--surf);}
+.grp .row:first-of-type{border-top:0;}
+.row.done{background:var(--row-done);}
+.chk{flex:0 0 62px;border:0;background:transparent;display:grid;place-items:center;border-right:1px solid var(--line);}
+.box{width:30px;height:30px;border-radius:8px;border:2.5px solid var(--line2);display:grid;place-items:center;
+  color:transparent;font-size:18px;font-weight:800;transition:all .12s;}
+.row.done .box{background:var(--ok);border-color:var(--ok);color:#fff;}
+.body{flex:1;min-width:0;border:0;background:transparent;text-align:left;padding:11px 12px 11px 11px;display:block;}
+.l1{display:flex;align-items:baseline;gap:8px;}
+.tag{font-family:var(--mono);font-size:16px;font-weight:700;letter-spacing:-.2px;}
+.row.done .tag{color:var(--ink2);text-decoration:line-through;text-decoration-thickness:1.5px;}
+.pill{font-family:var(--mono);font-size:10.5px;font-weight:700;padding:2px 6px;border-radius:5px;
+  background:var(--surf3);color:var(--ink2);letter-spacing:.3px;white-space:nowrap;}
+.pill.cat{background:#E2ECF6;color:#1F5D93;} html[data-theme="dark"] .pill.cat{background:#17303F;color:#8FC2E6;}
+.pill.spk{background:#F6EDE2;color:#8A5A2B;} html[data-theme="dark"] .pill.spk{background:#3A2A18;color:#E0B183;}
+.pill.ctl{background:#EEE8F6;color:#5B3D8C;} html[data-theme="dark"] .pill.ctl{background:#2A2138;color:#C0A8E4;}
+.grow{flex:1;}
+.ft{font-family:var(--mono);font-size:12.5px;color:var(--ink2);white-space:nowrap;}
+.l2{margin-top:4px;font-size:12.5px;color:var(--ink2);display:flex;align-items:center;gap:10px;}
+.l2 .dev{flex:1 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+/* the destination sits in its own right-hand column so the eye can run straight down it */
+.l2 .dest{flex:0 0 auto;font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--ink);
+  background:var(--surf3);border-radius:6px;padding:3px 8px 3px 6px;letter-spacing:-.2px;
+  max-width:46%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.l2 .dest .arw{color:var(--copper);font-weight:700;margin-right:5px;}
+.l2 .dest .dno{color:var(--copper);}
+.l2 .dest.none{color:var(--warn);background:var(--warn-bg);}
+.row.done .l2 .dest{opacity:.55;}
+.l3{margin-top:4px;display:flex;gap:6px;flex-wrap:wrap;align-items:center;}
+.flag{font-size:10.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;padding:2.5px 7px;
+  border-radius:5px;background:var(--warn-bg);color:var(--warn);}
+.flag.del{background:#FBE3DE;color:var(--err);} html[data-theme="dark"] .flag.del{background:#331A15;color:var(--err);}
+.flag.add{background:var(--ok-bg);color:var(--ok);}
+/* v133 · a move is an engineering red-line, so it wears the same red the plan draws it in. */
+.flag.mvd{background:#FBE3DE;color:#D84048;}
+html[data-theme="dark"] .flag.mvd{background:#331A15;color:#F08A80;}
+.note{font-size:12.5px;color:var(--ink);background:var(--surf3);border-radius:7px;padding:6px 9px;
+  margin-top:5px;line-height:1.4;white-space:pre-wrap;}
+.note b{color:var(--ink2);font-weight:600;font-size:11px;}
+/* v132 · a crew note reads as a margin note, not as something reported. Dashed edge, no
+   fill of its own, so at a glance it is plainly a different kind of thing from an office
+   note — the distinction has to survive being read at arm's length on a ladder. */
+.note.crew{background:transparent;border:1px dashed var(--line2,var(--line));color:var(--ink2);}
+.note.crew b{color:var(--ink3);}
+.more{flex:0 0 46px;border:0;background:transparent;color:var(--ink3);font-size:20px;border-left:1px solid var(--line);}
+.empty{text-align:center;color:var(--ink3);padding:50px 20px;font-size:14px;line-height:1.6;}
+
+/* "Find it on the drawing" — its OWN mark, drawn over the tag and then removed.
+   It used to recolour the green progress rect, which is zero-width until a cable is
+   ticked, so the flash was invisible in exactly the case a tech needs it: looking for
+   a cable they have NOT pulled yet. A separate mark also cannot lie about progress. */
+@keyframes findpulse{
+  0%{opacity:0;stroke-width:var(--fw3)}
+  10%{opacity:1;stroke-width:var(--fw1)}
+  38%{opacity:1;stroke-width:var(--fw1)}
+  56%{opacity:.35;stroke-width:var(--fw2)}
+  74%{opacity:1;stroke-width:var(--fw1)}
+  100%{opacity:0;stroke-width:var(--fw1)}
+}
+.findmark{fill:none;stroke:#C16236;animation:findpulse 2s ease-out forwards;pointer-events:none;}
+/* v129 · the same "here it is" mark, on a list row — the return trip from the drawing.
+   Inset so it cannot widen the row and start a sideways scroll on a phone. */
+@keyframes rowfound{
+  0%{box-shadow:inset 0 0 0 0 rgba(193,98,54,0);}
+  12%{box-shadow:inset 0 0 0 3px #C16236;}
+  62%{box-shadow:inset 0 0 0 3px #C16236;}
+  100%{box-shadow:inset 0 0 0 0 rgba(193,98,54,0);}}
+.row.found{animation:rowfound 2.1s ease-out forwards;}
+
+/* ---------- plan view ---------- */
+/* above the list header (z 30), below the note drawer (z 40) — the plan is a full
+   takeover of the screen, not a panel under the list's chrome */
+#planWrap{display:none;position:fixed;inset:0;z-index:35;background:var(--bg);flex-direction:column;}
+#planWrap.on{display:flex;}
+.pbar2{display:flex;align-items:center;gap:8px;padding:calc(8px + env(safe-area-inset-top)) 10px 8px;
+  background:var(--surf);border-bottom:1px solid var(--line);flex-wrap:wrap;}
+.ftabs{display:flex;gap:6px;overflow-x:auto;flex:1;min-width:0;}
+.ftabs::-webkit-scrollbar{display:none;}
+.ftab{background:var(--surf2);border:1px solid var(--line);border-radius:8px;padding:0 12px;min-height:40px;
+  font-size:13px;font-weight:600;color:var(--ink2);white-space:nowrap;}
+.ftab.on{background:var(--copper);border-color:var(--copper);color:var(--on-copper);}
+.planstage{flex:1;position:relative;overflow:hidden;background:#fff;touch-action:none;}
+.planstage svg{position:absolute;inset:0;width:100%;height:100%;}
+.planhint{position:absolute;left:0;right:0;bottom:78px;text-align:center;pointer-events:none;
+  font-size:12px;color:#5C554B;}
+.planhint span{background:rgba(255,255,255,.92);border:1px solid #DAD4CB;border-radius:99px;padding:7px 14px;}
+/* v133 · the armed-move bar. Sits above the hint's slot, below the zoom cluster's reach,
+   and is the only thing on the plan that says a tap will do something other than open a row. */
+.movebar{position:absolute;left:12px;right:70px;bottom:78px;display:none;align-items:center;gap:10px;
+  background:#D84048;color:#fff;border-radius:99px;padding:9px 9px 9px 16px;
+  box-shadow:0 3px 14px rgba(0,0,0,.22);font-size:13.5px;font-weight:600;z-index:6;}
+.movebar.on{display:flex;}
+.movebar span{flex:1;}
+.movebar button{border:0;background:rgba(255,255,255,.22);color:#fff;font-weight:700;
+  border-radius:99px;padding:8px 14px;font-size:13px;min-height:36px;}
+/* the recorded move, in the drawer */
+.movebox{margin-top:12px;border:1px solid #F1BDB4;background:#FBE3DE;border-radius:10px;padding:11px 12px;}
+html[data-theme="dark"] .movebox{background:#331A15;border-color:#5A2A22;}
+.movebox b{color:#D84048;display:block;font-size:13.5px;}
+.movebox span{display:block;color:var(--ink2);font-size:12.5px;margin-top:4px;line-height:1.4;}
+.zoomc{position:absolute;right:12px;bottom:14px;display:flex;flex-direction:column;gap:6px;}
+.zoomc button{width:44px;height:44px;border-radius:10px;border:1px solid #DAD4CB;background:rgba(255,255,255,.95);
+  font-size:19px;font-weight:700;color:#3A342C;box-shadow:0 2px 8px rgba(0,0,0,.12);}
+.swleft{display:flex;align-items:center;gap:7px;background:var(--surf2);border:1px solid var(--line);
+  border-radius:8px;padding:0 11px;min-height:40px;font-size:12.5px;font-weight:600;color:var(--ink2);
+  white-space:nowrap;cursor:pointer;}
+.swleft input{width:17px;height:17px;margin:0;}
+.planct{font-size:12px;color:var(--ink3);padding:0 2px 8px 10px;background:var(--surf);}
+/* z 38: ABOVE the plan (35), or the way back to the list is buried under the drawing.
+   Still below the note drawer (40) so a card can cover it. */
+.viewpill{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom));
+  z-index:38;background:#1A1611;color:#F6F3EE;border:0;border-radius:99px;padding:13px 22px;
+  font-size:14.5px;font-weight:700;box-shadow:0 6px 20px rgba(0,0,0,.3);display:none;align-items:center;gap:8px;}
+.viewpill.show{display:flex;}
+html[data-theme="dark"] .viewpill{background:#F0EEE9;color:#17140F;}
+.row.flash{animation:fl 1.6s ease;}
+@keyframes fl{0%,55%{background:#FBF0DC}100%{background:transparent}}
+
+/* ---------- FAB ---------- */
+/* left, not right — the right edge is the destination column and must stay readable */
+.fab{position:fixed;left:16px;bottom:calc(20px + env(safe-area-inset-bottom));z-index:25;
+  background:linear-gradient(135deg,#B06A3E,#C88455 30%,#E2A87C 52%,#C77B4E 70%,#9A5A34);color:var(--on-copper);
+  border:0;border-radius:99px;padding:14px 20px;font-weight:700;font-size:14.5px;
+  box-shadow:0 6px 20px rgba(0,0,0,.28);display:flex;align-items:center;gap:7px;}
+
+/* ---------- drawer ---------- */
+.scrim{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:40;opacity:0;pointer-events:none;transition:opacity .18s;}
+.scrim.on{opacity:1;pointer-events:auto;}
+.sheet{position:fixed;left:0;right:0;bottom:0;z-index:41;background:var(--surf);
+  border-radius:16px 16px 0 0;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch;
+  transform:translateY(102%);transition:transform .22s cubic-bezier(.3,.8,.4,1);
+  padding:0 16px calc(24px + env(safe-area-inset-bottom));box-shadow:0 -6px 30px rgba(0,0,0,.25);}
+.sheet.on{transform:translateY(0);}
+.grab{width:42px;height:4.5px;border-radius:99px;background:var(--line2);margin:9px auto 4px;}
+.sh{display:flex;align-items:center;gap:10px;padding:6px 0 12px;position:sticky;top:0;background:var(--surf);z-index:2;}
+.sh h2{margin:0;font-size:17px;font-family:var(--mono);font-weight:700;flex:1;}
+.sh .x{background:var(--surf3);border:0;border-radius:8px;width:36px;height:36px;font-size:17px;}
+.facts{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:13.5px;
+  background:var(--surf2);border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px;}
+.facts dt{color:var(--ink3);font-size:11.5px;text-transform:uppercase;letter-spacing:.5px;padding-top:2px;}
+.facts dd{margin:0;font-weight:600;}
+.facts dd.m{font-family:var(--mono);}
+.bigtog{width:100%;border:2px solid var(--line2);background:var(--surf2);border-radius:12px;padding:16px;
+  font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:16px;}
+.bigtog.on{background:var(--ok);border-color:var(--ok);color:#fff;}
+.lbl{font-size:11.5px;text-transform:uppercase;letter-spacing:.6px;color:var(--ink3);font-weight:700;margin:0 0 7px;}
+/* v132: says where a box's contents go, under its label. The whole point of two boxes is
+   that a tech never has to remember which is which. */
+.hintline{font-size:12px;color:var(--ink3);margin:-3px 0 7px;line-height:1.4;}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px;}
+.chip{border:1.5px solid var(--line2);background:var(--surf2);border-radius:99px;padding:9px 14px;font-size:13.5px;font-weight:600;}
+.chip[aria-pressed="true"]{background:var(--copper);border-color:var(--copper);color:var(--on-copper);}
+textarea,.sheet input,.sheet select{width:100%;background:var(--surf2);border:1px solid var(--line2);
+  border-radius:10px;padding:12px;font-size:15px;margin-bottom:14px;}
+textarea{min-height:96px;resize:vertical;line-height:1.45;}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:0 12px;}
+/* DLF v218: footage marks — two numbers off the jacket, the sheet does the subtraction */
+.marks{display:grid;grid-template-columns:1fr auto 1fr auto;gap:0 8px;align-items:start;}
+.marks .sep{padding-top:12px;font-size:17px;color:var(--ink3);}
+.unit{display:flex;border:1px solid var(--line2);border-radius:10px;overflow:hidden;margin-bottom:14px;}
+.unit button{border:0;background:var(--surf2);padding:12px 13px;font-size:14px;font-weight:700;color:var(--ink2);}
+.unit button[aria-pressed="true"]{background:var(--copper);color:var(--on-copper);}
+.markres{font-size:13.5px;font-weight:700;margin:-6px 0 12px;font-family:var(--mono);min-height:0;}
+.markres:empty{display:none;}
+.lenwarn{font-size:13px;color:var(--warn);background:var(--warn-bg);border-radius:8px;padding:9px 11px;margin:-6px 0 14px;line-height:1.4;}
+.lenwarn:empty{display:none;}
+.ft.chk{color:var(--warn);font-weight:700;}
+.btn{width:100%;border:0;border-radius:11px;padding:15px;font-size:15.5px;font-weight:700;
+  background:linear-gradient(135deg,#B06A3E,#C88455 30%,#E2A87C 52%,#C77B4E 70%,#9A5A34);color:var(--on-copper);}
+.btn.ghost{background:var(--surf2);border:1px solid var(--line2);color:var(--ink);}
+.menu{display:flex;flex-direction:column;gap:9px;}
+.menu button,.menu a.mailto{text-align:left;padding:15px 16px;border-radius:11px;
+  border:1px solid var(--line);background:var(--surf2);font-size:15px;font-weight:600;
+  display:block;width:100%;}
+.menu a.mailto{text-decoration:none;color:var(--ink);}
+.menu a.mailto:visited{color:var(--ink);}
+.menu button small,.menu a.mailto small{display:block;font-weight:400;font-size:12px;
+  color:var(--ink2);margin-top:3px;line-height:1.4;text-decoration:none;}
+/* the one destination, stated every time */
+.destbox{border:1.5px solid var(--copper);background:var(--surf2);border-radius:10px;
+  padding:11px 13px;margin:0 0 14px;}
+.destbox .k{font-size:10px;font-weight:700;letter-spacing:.9px;color:var(--copper);margin-bottom:4px;}
+.destbox .p{font-size:14.5px;line-height:1.45;color:var(--ink);}
+.facts dd .m,.tagmsg .m{font-family:var(--mono);}
+
+/* tablet check */
+.chk-row{border:1px solid var(--line);border-left:4px solid var(--ok);border-radius:9px;
+  padding:11px 13px;margin-bottom:9px;background:var(--surf2);}
+.chk-row.bad{border-left-color:var(--err);}
+.chk-k{font-weight:700;font-size:13.5px;color:var(--ok);margin-bottom:3px;}
+.chk-row.bad .chk-k{color:var(--err);}
+.chk-t{font-size:13px;color:var(--ink2);line-height:1.45;}
+/* help */
+.help-b{border-top:1px solid var(--line);padding:13px 0 2px;}
+.help-b:first-of-type{border-top:0;padding-top:4px;}
+.help-b h4{margin:0 0 5px;font-size:14px;font-weight:700;letter-spacing:.2px;}
+.help-b p{margin:0;font-size:13.5px;line-height:1.55;color:var(--ink2);}
+/* v137: the cable list inside Add a run. A device's complement lands here and the
+   tech edits it — so a line has to be removable with a thumb, and the letter it will
+   carry has to be visible BEFORE the save, not discovered on the sheet afterwards. */
+.cabs{margin-bottom:10px;}
+.cab{display:flex;align-items:center;gap:9px;margin-bottom:9px;}
+.cab-n{font-family:var(--mono);font-weight:700;font-size:13px;color:var(--copper);
+  width:22px;text-align:center;flex:0 0 22px;}
+.cab .cab-in{margin-bottom:0;flex:1;min-width:0;text-transform:uppercase;}
+.cab-x{flex:0 0 40px;width:40px;height:44px;border:1px solid var(--line2);background:var(--surf2);
+  border-radius:10px;color:var(--ink3);font-size:15px;}
+.cab-x:active{background:var(--surf3);}
+#aFind{margin-bottom:9px;}
+/* v138: the host-app warning. Louder than the storage banner because it is the one
+   condition that can cost a day's work, and it is a BUTTON — the bar is the way into
+   the instructions, so there is nowhere else to look. It does not dismiss: the
+   condition is the problem, and it goes away when the problem does. */
+.banner.hostwarn{display:block;width:100%;text-align:left;background:var(--err);
+  color:#fff;border-color:var(--err);font-weight:600;line-height:1.45;margin:0 0 9px;}
+.banner.hostwarn u{text-underline-offset:2px;white-space:nowrap;}
+.banner.hostwarn:active{filter:brightness(.92);}
+ol.steps{margin:0 0 14px;padding-left:22px;}
+ol.steps li{font-size:14px;line-height:1.5;margin-bottom:6px;color:var(--ink);}
+.banner{background:var(--warn-bg);color:var(--warn);border:1px solid currentColor;border-radius:9px;
+  padding:10px 12px;font-size:12.5px;line-height:1.45;margin:0 0 9px;font-weight:600;}
+.toast{position:fixed;left:50%;transform:translateX(-50%) translateY(20px);bottom:calc(92px + env(safe-area-inset-bottom));
+  background:#1A1611;color:#F0EEE9;padding:12px 20px;border-radius:99px;font-size:14px;font-weight:600;z-index:60;
+  opacity:0;transition:all .2s;pointer-events:none;box-shadow:0 6px 20px rgba(0,0,0,.3);}
+.toast.on{opacity:1;transform:translateX(-50%) translateY(0);}
+/* v134: only a toast carrying a button becomes tappable — otherwise it would sit over the
+   list eating taps meant for the row beneath it. */
+.toast.act{pointer-events:auto;display:flex;align-items:center;gap:14px;padding:8px 8px 8px 20px;}
+.toast.act button{border:0;background:#F0EEE9;color:#1A1611;font-weight:700;font-size:13.5px;
+  border-radius:99px;padding:9px 16px;min-height:38px;}
+@media(min-width:760px){ main{max-width:900px;margin:0 auto;} header>div{max-width:900px;margin:0 auto;}
+  .sheet{max-width:640px;left:50%;transform:translate(-50%,102%);border-radius:16px 16px 0 0;}
+  .sheet.on{transform:translate(-50%,0);} }
+
+/* ══ DLF v179 · PANEL VIEW — Frameworks RackFrame / WireFrame terminations ══ */
+#panelWrap{display:none;position:fixed;inset:0;z-index:36;background:var(--bg);flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+#panelWrap.on{display:flex;}
+.pnbar{position:sticky;top:0;z-index:3;background:var(--surf);border-bottom:1px solid var(--line);padding:10px 14px 8px;}
+.pnbar .pnt{font-family:var(--mono);font-weight:700;font-size:16px;}
+.pnbar .pns{font-size:12.5px;color:var(--ink2);margin-top:3px;}
+.pntabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;}
+.pnbody{padding:4px 12px 110px;}
+.dpan{margin:12px 0;border:1px solid var(--line2);border-radius:12px;padding:10px;background:var(--surf);
+  display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.plate{border:1.5px solid var(--line2);border-radius:10px;padding:8px 10px;background:var(--surf2);min-height:78px;
+  text-align:left;font:inherit;color:var(--ink);width:100%;}
+.plate.empty{border-style:dashed;color:var(--ink3);}
+.plate.chg{border-color:var(--warn);box-shadow:inset 0 0 0 1px var(--warn);}
+.plate .ph{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-weight:700;font-size:15px;}
+.plate .pt{font-size:12px;color:var(--ink2);font-family:var(--sans);font-weight:600;}
+.pdots{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin-top:7px;}
+.pdot{height:18px;border-radius:4px;border:1px solid var(--line2);font-size:10px;text-align:center;line-height:16px;color:var(--ink3);font-family:var(--mono);}
+.pdot.a{background:var(--surf3);color:var(--ink2);}
+.pdot.t{background:var(--ok-bg);border-color:var(--ok);color:var(--ok);}
+.pdot.x{background:var(--ok);border-color:var(--ok);color:#fff;}
+.pnleft{margin:14px 0 6px;}
+.pnleft button{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--surf);border-radius:10px;
+  padding:11px 12px;margin-bottom:6px;font-size:14px;color:var(--ink);}
+.pnleft button .m{font-family:var(--mono);font-weight:700;}
+.prow{display:flex;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--line);}
+.prow .pn{font-family:var(--mono);font-weight:700;width:66px;font-size:14px;}
+.prow .pc{flex:1;min-width:0;text-align:left;border:1.5px solid var(--line2);border-radius:10px;padding:10px;background:var(--surf2);
+  font-size:13.5px;min-height:46px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.prow .pc.sp{color:var(--ink3);border-style:dashed;}
+.prow .pc.chg{border-color:var(--warn);}
+.tg{min-width:62px;min-height:46px;border-radius:10px;border:1.5px solid var(--line2);background:var(--surf2);font-weight:700;font-size:12.5px;color:var(--ink);}
+.tg.on{background:var(--ok);border-color:var(--ok);color:#fff;}
+.pick{display:block;width:100%;text-align:left;border:1px solid var(--line);background:var(--surf2);border-radius:10px;
+  padding:12px;margin-bottom:6px;font-size:14px;color:var(--ink);}
+.pick .m{font-family:var(--mono);font-weight:700;}
+.pick.cur{border-color:var(--copper);box-shadow:inset 0 0 0 1px var(--copper);}
+#btnPanel{left:auto;right:16px;transform:none;}
+/* ══ DLF v213 · SPEC SHEETS ══ */
+.specv{position:fixed;inset:0;z-index:60;background:#2a2622;display:none;flex-direction:column;}
+.specv.on{display:flex;}
+.specv .sbar{display:flex;align-items:center;gap:7px;padding:calc(8px + env(safe-area-inset-top)) 10px 8px;
+  background:var(--surf);border-bottom:1px solid var(--line);}
+.specv .sbar b{flex:1;min-width:0;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.specv .sbar button{min-width:42px;height:40px;border-radius:9px;border:1px solid var(--line2);background:var(--surf2);
+  font-size:17px;font-weight:700;padding:0 8px;}
+.specv .sbar button:disabled{opacity:.35;}
+.specv .sbar .pg{font-family:var(--mono);font-size:13px;color:var(--ink2);min-width:48px;text-align:center;}
+.specv .spg{flex:1;overflow:auto;-webkit-overflow-scrolling:touch;}
+.specv .spg canvas,.specv .spg img{display:block;margin:12px auto;background:#fff;box-shadow:0 2px 14px rgba(0,0,0,.5);transform-origin:50% 0;}
+.specv .msg{color:#eee;text-align:center;margin:40px 16px;font-size:15px;line-height:1.5;}
+.devsub{font-size:13px;color:var(--ink2);margin:0 0 12px;line-height:1.45;}
+.specline{font-size:12px;color:var(--ink3);margin:-8px 0 16px;word-break:break-all;}

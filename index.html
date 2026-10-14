@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="AVI Field">
+<meta name="theme-color" content="#201D1A">
+<title>AVI Field</title>
+<link rel="stylesheet" href="sheet.css">
+<style>
+/* start screen — uses the sheet's own tokens */
+body.nojob > :not(#start):not(script){display:none!important}
+#start{min-height:100vh;background:var(--bg);color:var(--ink);padding:max(24px,env(safe-area-inset-top)) 16px 32px}
+.st-wrap{max-width:520px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+.st-head{display:flex;align-items:center;gap:12px;margin:12px 0 10px}
+.st-t1{font-size:24px;font-weight:700}
+.st-t2{color:var(--ink2);font-size:14px}
+.st-card{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:6px}
+.st-k{font-family:var(--mono);font-size:11px;letter-spacing:.08em;color:var(--ink3)}
+.st-name{font-size:20px;font-weight:700}
+.st-meta{color:var(--ink2);font-size:14px;margin-bottom:8px}
+.st-hint{color:var(--ink2);font-size:15px;line-height:1.45;margin:0}
+.st-msg{font-size:15px;margin:0;color:var(--ink2);min-height:1.2em}
+.st-msg.bad{color:var(--err)}
+.st-ver{font-family:var(--mono);font-size:12px;color:var(--ink3);margin-top:12px}
+</style>
+</head>
+<body class="nojob">
+<div id="start" hidden>
+  <div class="st-wrap">
+    <div class="st-head"><div class="mark">AVI</div><div><div class="st-t1">AVI Field</div><div class="st-t2">Wire pull sheet</div></div></div>
+
+    <div id="stJob" class="st-card" hidden>
+      <div class="st-k">ON THIS IPAD</div>
+      <div class="st-name" id="stJobName">—</div>
+      <div class="st-meta" id="stJobMeta">—</div>
+      <button class="btn" id="stOpen">Open this job</button>
+    </div>
+
+    <button class="btn" id="stLoad">Load a job file</button>
+    <p class="st-hint">The office saves each job as a file ending in <b>_FieldJob.json</b> in the job’s Dropbox folder. Tap the button, choose <b>Dropbox</b>, and pick that file. After that it opens straight away, with or without signal.</p>
+    <p class="st-hint">Got a revised file from the office? Load it here too. Your ticks and notes are kept.</p>
+    <p class="st-msg" id="stMsg" role="status"></p>
+    <p class="st-ver" id="stVer"></p>
+  </div>
+  <input type="file" id="jobIn" style="display:none">
+</div>
+
+<header><div>
+  <div class="hrow">
+    <div class="mark">AVI</div>
+    <div class="titles">
+      <div class="t1" id="hTitle">—</div>
+      <div class="t2" id="hSub">—</div>
+    </div>
+    <button class="iconbtn" id="btnHelp" title="How to use this">?</button>
+    <button class="iconbtn" id="btnTheme" title="Light / dark">◐</button>
+    <button class="iconbtn" id="btnMenu" title="Menu">☰</button>
+  </div>
+  <div class="prog">
+    <div class="pbar"><div class="pfill" id="pFill" style="width:0%"></div></div>
+    <div class="pmeta"><span><b id="pDone">0</b> of <b id="pTot">0</b> pulled</span>
+      <span id="pRight">—</span></div>
+  </div>
+  <div id="storeWarn"></div>
+  <div class="seg" id="segView">
+    <button data-v="all" aria-pressed="true">All</button>
+    <button data-v="todo" aria-pressed="false">To pull</button>
+    <button data-v="done" aria-pressed="false">Pulled</button>
+    <button data-v="flag" aria-pressed="false">Flagged</button>
+    <button data-v="crew" aria-pressed="false">✎ Crew</button>
+  </div>
+  <div class="filters">
+    <select id="fFloor"></select>
+    <select id="fDisc"></select>
+    <select id="fType"></select>
+    <input id="fQ" type="search" placeholder="Search tag, room, device…" autocomplete="off">
+  </div>
+  <div class="rooms">
+    <span id="roomCount">—</span>
+    <span class="grow"></span>
+    <button class="mini" id="btnExpand">⊞ Expand all</button>
+    <button class="mini" id="btnCollapse">⊟ Collapse all</button>
+  </div>
+</div></header>
+
+<main id="list"></main>
+<button class="fab" id="btnAdd">＋ Add a run</button>
+
+<div id="planWrap">
+  <div class="pbar2">
+    <div class="ftabs" id="fTabs"></div>
+    <label class="swleft"><input type="checkbox" id="swLeft"> Show what's left</label>
+    <button class="iconbtn" id="btnPlanHelp" title="What the colours mean">?</button>
+  </div>
+  <div class="planct" id="planCt">—</div>
+  <div class="planstage" id="stage">
+    <div class="planhint" id="planHint"><span>Drag to move · pinch to zoom · tap a tag</span></div>
+    <div class="movebar" id="moveBar">
+      <span>◎ Tap where it should end up</span>
+      <button id="mvCancel">Cancel</button>
+    </div>
+    <div class="zoomc">
+      <button id="zIn">＋</button><button id="zOut">−</button><button id="zFit" title="Fit">⤢</button>
+    </div>
+  </div>
+</div>
+<button class="viewpill" id="btnView">▦ Plan</button>
+<div id="panelWrap">
+  <div class="pnbar"><div class="pnt" id="pnTitle">Panel</div><div class="pns" id="pnStat">—</div>
+    <div class="pntabs" id="pnTabs"></div></div>
+  <div class="pnbody" id="pnBody"></div>
+</div>
+<button class="viewpill" id="btnPanel">▣ Panel</button>
+
+
+<div class="scrim" id="scrim"></div>
+<div class="sheet" id="sheet"><div class="grab"></div><div id="sheetBody"></div></div>
+<div class="specv" id="specV"><div class="sbar">
+  <button data-sx aria-label="Close">✕</button><b id="specName"></b>
+  <button data-sp aria-label="Previous page">‹</button><span class="pg" id="specPg"></span><button data-sn aria-label="Next page">›</button>
+  <button data-zo aria-label="Zoom out">−</button><button data-zi aria-label="Zoom in">+</button></div>
+  <div class="spg" id="specPgs"></div></div>
+<div class="toast" id="toast"></div>
+<script src="app.js"></script>
+</body>
+</html>
