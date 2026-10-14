@@ -11,7 +11,7 @@
                     sheet, so a revised job file for the same job keeps them)
    Step 1 keeps ONE job. The list of several jobs is step 5. ═══════════════════════════ */
 (function(){
-  const APP_VERSION = '0.1 · step 1';
+  const APP_VERSION = '0.2 · step 2';
   const $ = id => document.getElementById(id);
   const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
@@ -80,7 +80,11 @@
     try{
       /* the spec-sheet viewer only when the office sent spec sheets */
       if(D.specs && Object.keys(D.specs).length){ await loadScript('pdf.min.js'); await loadScript('pdf.worker.min.js'); }
-      await loadScript('sheet.js?v='+encodeURIComponent(APP_VERSION));
+      await loadScript('sheet.js');
+      /* Step 2: say once that the app was updated, so a tech knows the new version arrived. */
+      try{ const was=localStorage.getItem('avi_field_ver');
+           if(was && was!==APP_VERSION && typeof toast==='function') toast('Updated to AVI Field '+APP_VERSION);
+           localStorage.setItem('avi_field_ver',APP_VERSION); }catch(_){}
     }catch(e){
       document.body.classList.add('nojob'); await showStart();
       msg('The app could not start ('+(e&&e.message||e)+'). Check the signal and try again.',true);
@@ -107,6 +111,12 @@
     };
     fr.readAsText(f);
   };
+
+  /* ---- Step 2: the offline copy. sw.js keeps every app file on the iPad, so the icon opens
+     with no signal. With signal it checks GitHub for a newer version first. ---- */
+  if('serviceWorker' in navigator){
+    window.addEventListener('load',()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
+  }
 
   /* ---- boot ---- */
   (async function(){

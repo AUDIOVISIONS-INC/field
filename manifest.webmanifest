@@ -1,0 +1,14 @@
+{
+  "name": "AVI Field",
+  "short_name": "AVI Field",
+  "description": "AVI wire pull sheet for the field",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#F4F2EF",
+  "theme_color": "#201D1A",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
