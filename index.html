@@ -38,6 +38,23 @@ body.nojob > :not(#start):not(script){display:none!important}
 .st-job .pc b{display:block;font-size:20px;color:var(--ink)}
 .st-job .rm{background:none;border:1px solid var(--line2);border-radius:9px;padding:8px 10px;font-size:13px;color:var(--err)}
 .st-store{font-family:var(--mono);font-size:12px;color:var(--ink3)}
+/* 0.5 · job tabs + drawings viewer */
+.jtabs{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding:2px 0}
+.jtabs button{flex:0 0 auto;border:1px solid var(--line2);background:var(--surf2);color:var(--ink);border-radius:99px;padding:8px 14px;font-size:14px;font-weight:600}
+.jtabs button.on{background:var(--copper);border-color:var(--copper);color:var(--on-copper)}
+.jtabs button.jobs{background:none;border-color:transparent;color:var(--ink2);padding-left:4px}
+header .jtabs{padding:0 0 8px}
+#drw{position:fixed;inset:0;z-index:37;background:var(--bg);display:flex;flex-direction:column}
+#drw[hidden]{display:none}
+.dbar{background:var(--surf);border-bottom:1px solid var(--line);padding:calc(8px + env(safe-area-inset-top)) 12px 8px;display:flex;flex-direction:column;gap:6px}
+.dpages{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.dpages button{flex:0 0 auto;border:1px solid var(--line);background:var(--surf);color:var(--ink2);border-radius:8px;padding:5px 10px;font-size:13px;font-family:var(--mono)}
+.dpages button.on{border-color:var(--copper);color:var(--ink);font-weight:700}
+.dstage{position:relative;flex:1;overflow:hidden;touch-action:none;background:#fff}
+#drwCanvas{position:absolute;left:0;top:0;transform-origin:0 0}
+.dmsg{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);color:var(--ink2);font-size:15px;text-align:center;pointer-events:none}
+.dz{position:absolute;right:14px;bottom:calc(16px + env(safe-area-inset-bottom))}
+body.drwonly > :not(#drw):not(script):not(.toast):not(.scrim):not(.sheet){display:none!important}
 .st-ver{font-family:var(--mono);font-size:12px;color:var(--ink3);margin-top:12px}
 </style>
 </head>
@@ -46,17 +63,17 @@ body.nojob > :not(#start):not(script){display:none!important}
   <div class="st-wrap">
     <div class="st-head"><div class="mark">AVI</div><div><div class="st-t1">AVI Field</div><div class="st-t2">Wire pull sheet</div></div></div>
 
-    <button class="btn" id="stLoad">Load a job file</button>
+    <button class="btn" id="stLoad">Load job files</button>
     <p class="st-msg" id="stMsg" role="status"></p>
 
     <div id="stJobsHead" class="st-k" hidden>JOBS ON THIS IPAD</div>
     <div id="stJobs" class="st-jobs"></div>
 
-    <p class="st-hint">The office saves each job as a file ending in <b>_FieldJob.json</b> in the job’s Dropbox folder. Tap <b>Load a job file</b>, choose <b>Dropbox</b>, and pick that file. It stays on this iPad and opens with or without signal.</p>
-    <p class="st-hint">Got a revised file from the office? Load it the same way. It replaces that job, and your ticks and notes are kept.</p>
+    <p class="st-hint">Tap <b>Load job files</b>, choose <b>Dropbox</b>, open the job’s folder and select its files: the pull sheet (ending in <b>_FieldJob.json</b>) and the rack elevation and schematic PDFs. Select several at once with <b>Select</b>. They stay on this iPad and open with or without signal.</p>
+    <p class="st-hint">Got a revised file from the office? Load it the same way. It replaces that part of the job, and your ticks and notes are kept.</p>
     <p class="st-ver" id="stVer"></p>
   </div>
-  <input type="file" id="jobIn" style="display:none">
+  <input type="file" id="jobIn" multiple style="display:none">
 </div>
 
 <header><div>
@@ -135,6 +152,17 @@ body.nojob > :not(#start):not(script){display:none!important}
   <button data-zo aria-label="Zoom out">−</button><button data-zi aria-label="Zoom in">+</button></div>
   <div class="spg" id="specPgs"></div></div>
 <div class="toast" id="toast"></div>
+<!-- AVI Field 0.5: the drawings viewer (rack elevation, schematic, other PDFs) -->
+<div id="drw" hidden>
+  <div class="dbar">
+    <div class="jtabs" id="drwTabs"></div>
+    <div class="dpages" id="drwPages"></div>
+  </div>
+  <div class="dstage" id="drwStage"><canvas id="drwCanvas"></canvas>
+    <div class="dmsg" id="drwMsg"></div>
+    <div class="zoomc dz"><button id="dzIn" aria-label="Zoom in">＋</button><button id="dzOut" aria-label="Zoom out">−</button><button id="dzFit" aria-label="Fit">⤢</button></div>
+  </div>
+</div>
 <script src="app.js"></script>
 </body>
 </html>
