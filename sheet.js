@@ -1912,7 +1912,7 @@ function initStage(){
     const P0=planBuilt[planIx];
     if(P0) P0.host.style.willChange='transform';  /* ask for a composited layer up front */
     pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
-    start={vb:{...VBOX}, pts:new Map(pts), moved:0,
+    start={vb:{...VBOX}, pts:new Map(pts), moved:0, multi:pts.size>1,   /* Field 0.3: a second finger is never a tap */
            tag:e.target.hasAttribute&&e.target.hasAttribute('data-c')?e.target:null,
            /* v134: which saved move, if any, this press landed on */
            mv:(e.target.closest&&e.target.closest('.mvone'))||null};
@@ -1930,12 +1930,20 @@ function initStage(){
       if(!a0||!b0) return;
       const d0=Math.hypot(b0.x-a0.x,b0.y-a0.y)||1, d1=Math.hypot(b.x-a.x,b.y-a.y)||1;
       const k=Math.max(0.15, Math.min(14, d0/d1));
+      /* AVI Field 0.3 · PINCH THAT STAYS UNDER THE FINGERS. The old pinch re-picked its anchor
+         from wherever the fingers' midpoint was NOW, against the view from when they landed:
+         as the hand drifted the anchor slid, so the drawing swam and could not be panned
+         while zooming. Now the drawing point under the midpoint at touch-down is held, and
+         carried to wherever the midpoint goes: zoom and pan together, like a photo. */
+      start.multi=true;
+      const m0x=(a0.x+b0.x)/2, m0y=(a0.y+b0.y)/2;
       const cx=(a.x+b.x)/2, cy=(a.y+b.y)/2;
       const s0=Math.min(r.width/start.vb.w, r.height/start.vb.h);
       const ox=(r.width-start.vb.w*s0)/2, oy=(r.height-start.vb.h*s0)/2;
-      const wx=start.vb.x+(cx-r.left-ox)/s0, wy=start.vb.y+(cy-r.top-oy)/s0;
-      const nw=start.vb.w*k, nh=start.vb.h*k;
-      VBOX={x: wx-(wx-start.vb.x)*k, y: wy-(wy-start.vb.y)*k, w:nw, h:nh};
+      const wx=start.vb.x+(m0x-r.left-ox)/s0, wy=start.vb.y+(m0y-r.top-oy)/s0;
+      const nw=start.vb.w*k, nh=start.vb.h*k, s1=Math.min(r.width/nw, r.height/nh);
+      const ox1=(r.width-nw*s1)/2, oy1=(r.height-nh*s1)/2;
+      VBOX={x: wx-(cx-r.left-ox1)/s1, y: wy-(cy-r.top-oy1)/s1, w:nw, h:nh};
     } else {
       const s=Math.min(r.width/start.vb.w, r.height/start.vb.h);
       const p0=start.pts.get(e.pointerId);
@@ -1949,6 +1957,16 @@ function initStage(){
        clientToWorld goes through getScreenCTM, which folds in a CSS transform still on the
        element — leave it and a tap that ends a pan lands the arrow somewhere else entirely. */
     commitGesture();
+    /* AVI Field 0.3: lifting ONE finger of a pinch used to leave the other finger measured from
+       where the pinch began, so the drawing jumped the moment it moved. Start a fresh one-finger
+       pan from exactly where the drawing is now, and never treat the end of a pinch as a tap. */
+    if(pts.size>1 && pts.has(e.pointerId)){
+      pts.delete(e.pointerId);
+      start={vb:{...VBOX}, pts:new Map(pts), moved:99, multi:true, tag:null, mv:null};
+      gBase={...VBOX};
+      return;
+    }
+    if(start && start.multi){ pts.delete(e.pointerId); if(!pts.size) start=null; return; }
     /* v133: while a move is armed the same tap-not-drag test lands the device instead of
        opening a row. It is checked FIRST so a destination that happens to sit on top of
        another cable's tag still works — a speaker often moves to where the next one is. */

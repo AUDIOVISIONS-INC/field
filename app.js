@@ -11,7 +11,7 @@
                     sheet, so a revised job file for the same job keeps them)
    Step 1 keeps ONE job. The list of several jobs is step 5. ═══════════════════════════ */
 (function(){
-  const APP_VERSION = '0.2 · step 2';
+  const APP_VERSION = '0.3 · pinch';
   const $ = id => document.getElementById(id);
   const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
