@@ -28,6 +28,16 @@ body.nojob > :not(#start):not(script){display:none!important}
 .st-hint{color:var(--ink2);font-size:15px;line-height:1.45;margin:0}
 .st-msg{font-size:15px;margin:0;color:var(--ink2);min-height:1.2em}
 .st-msg.bad{color:var(--err)}
+.st-jobs{display:flex;flex-direction:column;gap:10px}
+.st-job{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;gap:12px;align-items:center}
+.st-job.cur{border-color:var(--copper)}
+.st-job .main{flex:1;min-width:0;text-align:left;background:none;border:0;padding:0;cursor:pointer;color:inherit}
+.st-job .nm{font-size:18px;font-weight:700}
+.st-job .mt{color:var(--ink2);font-size:13.5px;margin-top:3px;line-height:1.4}
+.st-job .pc{font-family:var(--mono);font-size:13px;color:var(--ink2);text-align:right;min-width:64px}
+.st-job .pc b{display:block;font-size:20px;color:var(--ink)}
+.st-job .rm{background:none;border:1px solid var(--line2);border-radius:9px;padding:8px 10px;font-size:13px;color:var(--err)}
+.st-store{font-family:var(--mono);font-size:12px;color:var(--ink3)}
 .st-ver{font-family:var(--mono);font-size:12px;color:var(--ink3);margin-top:12px}
 </style>
 </head>
@@ -36,17 +46,14 @@ body.nojob > :not(#start):not(script){display:none!important}
   <div class="st-wrap">
     <div class="st-head"><div class="mark">AVI</div><div><div class="st-t1">AVI Field</div><div class="st-t2">Wire pull sheet</div></div></div>
 
-    <div id="stJob" class="st-card" hidden>
-      <div class="st-k">ON THIS IPAD</div>
-      <div class="st-name" id="stJobName">—</div>
-      <div class="st-meta" id="stJobMeta">—</div>
-      <button class="btn" id="stOpen">Open this job</button>
-    </div>
-
     <button class="btn" id="stLoad">Load a job file</button>
-    <p class="st-hint">The office saves each job as a file ending in <b>_FieldJob.json</b> in the job’s Dropbox folder. Tap the button, choose <b>Dropbox</b>, and pick that file. After that it opens straight away, with or without signal.</p>
-    <p class="st-hint">Got a revised file from the office? Load it here too. Your ticks and notes are kept.</p>
     <p class="st-msg" id="stMsg" role="status"></p>
+
+    <div id="stJobsHead" class="st-k" hidden>JOBS ON THIS IPAD</div>
+    <div id="stJobs" class="st-jobs"></div>
+
+    <p class="st-hint">The office saves each job as a file ending in <b>_FieldJob.json</b> in the job’s Dropbox folder. Tap <b>Load a job file</b>, choose <b>Dropbox</b>, and pick that file. It stays on this iPad and opens with or without signal.</p>
+    <p class="st-hint">Got a revised file from the office? Load it the same way. It replaces that job, and your ticks and notes are kept.</p>
     <p class="st-ver" id="stVer"></p>
   </div>
   <input type="file" id="jobIn" style="display:none">

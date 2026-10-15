@@ -3,7 +3,7 @@
    With signal, each file is checked against GitHub first (3-second limit), so a new
    version arrives the next time the app is opened. Job files are NOT handled here:
    they live in the app's own storage (IndexedDB) and never come from GitHub. */
-const CACHE = 'avi-field-v0.3';
+const CACHE = 'avi-field-v0.4';
 const FILES = ['./', 'index.html', 'app.js', 'sheet.js', 'sheet.css', 'pdf.min.js', 'pdf.worker.min.js',
                'manifest.webmanifest', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
