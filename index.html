@@ -54,6 +54,18 @@ header .jtabs{padding:0 0 8px}
 #drwCanvas{position:absolute;left:0;top:0;transform-origin:0 0}
 .dmsg{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%);color:var(--ink2);font-size:15px;text-align:center;pointer-events:none}
 .dz{position:absolute;right:14px;bottom:calc(16px + env(safe-area-inset-bottom))}
+.dtools{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;align-items:center}
+.dtools button{flex:0 0 auto;border:1px solid var(--line2);background:var(--surf);color:var(--ink);border-radius:9px;padding:7px 11px;font-size:13.5px;font-weight:600}
+.dtools button.on{background:#1A1611;border-color:#1A1611;color:#fff}
+.dtools button:disabled{opacity:.4}
+.dtools .sep{flex:0 0 8px}
+.dtools .hue.std{color:#D8242C}
+.dtools .hue.blue{color:#1E5BD8}
+.dmarks{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+.dnote{background:#FBF0DC;color:#7A4E0E;border-bottom:1px solid #E9D3A8;padding:8px 12px;font-size:13.5px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.dnote[hidden]{display:none}
+.dnote button{border:1px solid #C9A86A;background:#fff;border-radius:8px;padding:5px 10px;font-size:13px}
+.dstage[data-tool="hl"],.dstage[data-tool="ar"],.dstage[data-tool="tx"],.dstage[data-tool="er"]{cursor:crosshair}
 body.drwonly > :not(#drw):not(script):not(.toast):not(.scrim):not(.sheet){display:none!important}
 .st-ver{font-family:var(--mono);font-size:12px;color:var(--ink3);margin-top:12px}
 </style>
@@ -157,8 +169,10 @@ body.drwonly > :not(#drw):not(script):not(.toast):not(.scrim):not(.sheet){displa
   <div class="dbar">
     <div class="jtabs" id="drwTabs"></div>
     <div class="dpages" id="drwPages"></div>
+    <div class="dtools" id="drwTools"></div>
   </div>
-  <div class="dstage" id="drwStage"><canvas id="drwCanvas"></canvas>
+  <div class="dnote" id="drwNote" hidden></div>
+  <div class="dstage" id="drwStage"><canvas id="drwCanvas"></canvas><svg id="drwMarks" class="dmarks" xmlns="http://www.w3.org/2000/svg"></svg>
     <div class="dmsg" id="drwMsg"></div>
     <div class="zoomc dz"><button id="dzIn" aria-label="Zoom in">＋</button><button id="dzOut" aria-label="Zoom out">−</button><button id="dzFit" aria-label="Fit">⤢</button></div>
   </div>

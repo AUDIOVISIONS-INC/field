@@ -18,7 +18,7 @@
      ticks & notes  localStorage 'avi_pull_<number>_<sheet>' — unchanged since the HTML sheet
      open job       localStorage 'avi_field_active'; open part 'avi_field_part'           */
 (function(){
-  const APP_VERSION = '0.5 · drawings';
+  const APP_VERSION = '0.6 · markup';
   const $ = id => document.getElementById(id);
   const esc = s => (s==null?'':String(s)).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
   const LS = { get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
@@ -222,7 +222,7 @@
     V.key=k; V.part=part; V.n=V.doc.numPages;
     const pk='avi_field_page_'+k+'|'+part; V.page=Math.min(V.n, +LS.get(pk)||1);
     $('drwMsg').textContent='';
-    paintPages(); await gotoPage(V.page);
+    paintPages(); paintTools(); await gotoPage(V.page);
   }
   function paintPages(){
     const el=$('drwPages');
@@ -232,7 +232,7 @@
   async function gotoPage(n){
     V.page=n; LS.set('avi_field_page_'+V.key+'|'+V.part, n); paintPages();
     const pg=await V.doc.getPage(n); const vp=pg.getViewport({scale:1});
-    V.pw=vp.width; V.ph=vp.height; fitPage(); render();
+    V.pw=vp.width; V.ph=vp.height; fitPage(); render(); paintMarks(); showMarksNote();
   }
   function fitPage(){
     const r=$('drwStage').getBoundingClientRect();
@@ -255,10 +255,11 @@
     cv.width=off.width; cv.height=off.height; cv.style.width=r.width+'px'; cv.style.height=r.height+'px';
     cv.getContext('2d').drawImage(off,0,0);
     cv.style.transform=''; V.rz=V.z; V.rpx=V.px; V.rpy=V.py;
+    paintMarks();
   }
   /* show the gesture as a transform of the last picture: page point X sits at rp + X*fit*rz
      and must land on p + X*fit*z → scale a = z/rz, offset p − a·rp */
-  function showGesture(){ const a=V.z/V.rz;
+  function showGesture(){ paintMarks(); const a=V.z/V.rz;
     $('drwCanvas').style.transform='translate('+(V.px-a*V.rpx).toFixed(2)+'px,'+(V.py-a*V.rpy).toFixed(2)+'px) scale('+a.toFixed(5)+')'; }
   let raf=null; const queue=()=>{ if(raf) return; raf=requestAnimationFrame(()=>{ raf=null; showGesture(); }); };
   function zoomAt(k, cx, cy){
@@ -266,14 +267,109 @@
     const z=Math.max(1, Math.min(16, V.z*k)), wx=(x-V.px)/(V.fit*V.z), wy=(y-V.py)/(V.fit*V.z);
     V.z=z; V.px=x-wx*V.fit*z; V.py=y-wy*V.fit*z;
   }
+  /* ══ 0.6 · MARKUP ══════════════════════════════════════════════════════════════════════
+     Mike, 10-15/16: the rack builder's marks on the 75 Rock Rd set were a green highlighter to
+     tick things off, red arrows to move a device, and typed notes. Those three tools, a blue
+     alternate for each (his call), an eraser and undo. Marks live in PAGE units (pdf.js
+     viewport at scale 1, y down), so they stay on the drawing at any zoom; sizes are set from
+     the zoom they were drawn at, so a mark looks the same size it did under the finger.
+     Stored per job | part in localStorage 'avi_marks_<key>|<part>' = {pages:{n:[mark]}}.
+     With a drawing tool on, ONE finger draws and TWO still pan and pinch. A revised drawing
+     keeps its marks (Mike) and says so once, with Clear old marks. */
+  const COLORS={std:{hl:'#2EB82E', ar:'#D8242C', tx:'#D8242C'}, blue:{hl:'#2B7BFF', ar:'#1E5BD8', tx:'#1E5BD8'}};
+  let TOOL='move', HUE='std';
+  const marksKey=()=>'avi_marks_'+V.key+'|'+V.part;
+  function marksAll(){ try{ return JSON.parse(LS.get(marksKey())||'null')||{pages:{}}; }catch(e){ return {pages:{}}; } }
+  function marksOf(){ return (marksAll().pages[V.page])||[]; }
+  const UNDO={};                                   // key|part|page → [previous arrays]
+  function setMarks(list){ const all=marksAll(); const uk=marksKey()+'|'+V.page;
+    (UNDO[uk]=UNDO[uk]||[]).push(JSON.stringify(all.pages[V.page]||[])); if(UNDO[uk].length>60) UNDO[uk].shift();
+    all.pages[V.page]=list; LS.set(marksKey(),JSON.stringify(all)); paintMarks(); paintTools(); }
+  function undo(){ const uk=marksKey()+'|'+V.page, st=UNDO[uk]; if(!st||!st.length) return;
+    const all=marksAll(); all.pages[V.page]=JSON.parse(st.pop()); LS.set(marksKey(),JSON.stringify(all)); paintMarks(); paintTools(); }
+  const toPage=(cx,cy)=>{ const r=$('drwStage').getBoundingClientRect(), s=V.fit*V.z; return {x:(cx-r.left-V.px)/s, y:(cy-r.top-V.py)/s}; };
+  const toScr=(x,y)=>({x:V.px+x*V.fit*V.z, y:V.py+y*V.fit*V.z});
+  let DRAFT=null;
+  /* sizes follow the zoom they were drawn at, within limits in page points — drawn at full
+     zoom-out a 14 px highlighter would otherwise be several rack spaces wide */
+  const clampW=(t,w)=>t==='hl'?Math.max(3,Math.min(10,w)):Math.max(0.6,Math.min(4,w));
+  function snap(m){ const dx=m.x2-m.x1, dy=m.y2-m.y1, ang=Math.abs(Math.atan2(dy,dx)*180/Math.PI);
+    if(m.t!=='hl') return m;
+    if(ang<7||ang>173) m.y2=m.y1; else if(Math.abs(ang-90)<7) m.x2=m.x1; return m; }
+  function markSVG(m, draft){
+    const s=V.fit*V.z, A=toScr(m.x1,m.y1);
+    if(m.t==='tx'){ const fs=m.fs*s; return '<text x="'+A.x.toFixed(1)+'" y="'+A.y.toFixed(1)+'" font-size="'+fs.toFixed(1)+'" fill="'+m.c+
+        '" font-family="-apple-system,Helvetica,Arial,sans-serif" dominant-baseline="hanging">'+esc(m.text).split('\n').map((l,i)=>
+        '<tspan x="'+A.x.toFixed(1)+'" dy="'+(i?1.2*fs:0).toFixed(1)+'">'+l+'</tspan>').join('')+'</text>'; }
+    const B=toScr(m.x2,m.y2), w=Math.max(1,m.w*s);
+    if(m.t==='hl') return '<line x1="'+A.x+'" y1="'+A.y+'" x2="'+B.x+'" y2="'+B.y+'" stroke="'+m.c+'" stroke-opacity=".42" stroke-width="'+w+'" stroke-linecap="butt"/>';
+    const L=Math.hypot(B.x-A.x,B.y-A.y)||1, ux=(B.x-A.x)/L, uy=(B.y-A.y)/L, h=Math.max(8,w*4.5);
+    const bx=B.x-ux*h, by=B.y-uy*h, nx=-uy*h*0.45, ny=ux*h*0.45;
+    return '<line x1="'+A.x+'" y1="'+A.y+'" x2="'+bx+'" y2="'+by+'" stroke="'+m.c+'" stroke-width="'+w+'" stroke-linecap="round"/>'+
+      '<path d="M'+B.x+' '+B.y+' L'+(bx+nx)+' '+(by+ny)+' L'+(bx-nx)+' '+(by-ny)+' Z" fill="'+m.c+'"/>';
+  }
+  function paintMarks(){ const svg=$('drwMarks'); if(!svg) return;
+    if(!V.doc||$('drw').hidden){ svg.innerHTML=''; return; }
+    svg.innerHTML=marksOf().map(m=>markSVG(m)).join('')+(DRAFT?markSVG(DRAFT,true):''); }
+  /* the mark under a tap: a stroke within ~14 px of the finger, or inside a note's box */
+  function hit(cx,cy){ const r=$('drwStage').getBoundingClientRect(), x=cx-r.left, y=cy-r.top, s=V.fit*V.z, list=marksOf();
+    for(let i=list.length-1;i>=0;i--){ const m=list[i], A=toScr(m.x1,m.y1);
+      if(m.t==='tx'){ const fs=m.fs*s, lines=String(m.text).split('\n'), w=Math.max(...lines.map(l=>l.length))*fs*0.6, h=lines.length*fs*1.2;
+        if(x>=A.x-6&&x<=A.x+w+6&&y>=A.y-6&&y<=A.y+h+6) return i; continue; }
+      const B=toScr(m.x2,m.y2), dx=B.x-A.x, dy=B.y-A.y, L2=dx*dx+dy*dy||1, t=Math.max(0,Math.min(1,((x-A.x)*dx+(y-A.y)*dy)/L2));
+      if(Math.hypot(x-(A.x+t*dx), y-(A.y+t*dy)) <= 14+Math.max(1,m.w*s)/2) return i; }
+    return -1; }
+  function textAt(cx,cy){
+    const i=hit(cx,cy), list=marksOf();
+    if(i>=0 && list[i].t==='tx'){ const v=prompt('Edit the note (empty it to delete):', list[i].text); if(v==null) return;
+      const nl=list.slice(); if(!v.trim()) nl.splice(i,1); else nl[i]=Object.assign({},nl[i],{text:v.trim(), ts:Date.now()}); setMarks(nl); return; }
+    const v=prompt('Note:',''); if(!v||!v.trim()) return;
+    const p=toPage(cx,cy), s=V.fit*V.z;
+    setMarks(marksOf().concat([{id:'m'+Date.now(), t:'tx', c:COLORS[HUE].tx, x1:p.x, y1:p.y, fs:Math.max(6,Math.min(24,16/s)), text:v.trim(), ts:Date.now()}]));
+  }
+  function eraseAt(cx,cy){ const i=hit(cx,cy); if(i<0) return; const nl=marksOf().slice(); nl.splice(i,1); setMarks(nl); }
+  function paintTools(){
+    const el=$('drwTools'); if(!el) return;
+    const uk=marksKey()+'|'+V.page, canUndo=!!(UNDO[uk]&&UNDO[uk].length);
+    const b=(t,label,title)=>'<button data-tool="'+t+'" class="'+(TOOL===t?'on':'')+'" title="'+title+'">'+label+'</button>';
+    el.innerHTML=b('move','✋ Move','Pan and zoom')+b('hl','▬ Highlight','Drag along what is done')+
+      b('ar','➜ Arrow','Drag from the device to where it goes')+b('tx','T Note','Tap where the note goes')+b('er','⌫ Eraser','Tap a mark to remove it')+
+      '<span class="sep"></span><button data-hue class="hue '+HUE+'" title="Switch colour">'+(HUE==='std'?'● Red / green':'● Blue')+'</button>'+
+      '<button data-undo'+(canUndo?'':' disabled')+' title="Undo the last change on this sheet">↶ Undo</button>';
+    el.querySelectorAll('[data-tool]').forEach(x=>x.onclick=()=>{ TOOL=x.dataset.tool; paintTools(); $('drwStage').dataset.tool=TOOL; });
+    el.querySelector('[data-hue]').onclick=()=>{ HUE=HUE==='std'?'blue':'std'; paintTools(); };
+    el.querySelector('[data-undo]').onclick=undo;
+  }
+  /* a revised drawing keeps the old one's marks — said once, with a way to clear them */
+  function showMarksNote(){
+    const n=$('drwNote'); if(!n) return;
+    const flag='avi_marks_note_'+V.key+'|'+V.part;
+    const all=marksAll(), any=Object.values(all.pages||{}).some(l=>l&&l.length);
+    if(LS.get(flag)!=='1' || !any){ n.hidden=true; return; }
+    n.hidden=false;
+    n.innerHTML='This drawing was replaced with a newer one. Your marks from the old one are still here — check they line up. '+
+      '<button data-clear>Clear old marks</button><button data-ok>Keep them</button>';
+    n.querySelector('[data-ok]').onclick=()=>{ LS.del(flag); n.hidden=true; };
+    n.querySelector('[data-clear]').onclick=()=>{ if(!confirm('Clear every mark on every sheet of this drawing?')) return;
+      LS.del(marksKey()); LS.del(flag); n.hidden=true; paintMarks(); };
+  }
+
   (function gestures(){
-    const st=$('drwStage'), pts=new Map(); let g=null;
+    const st=$('drwStage'), pts=new Map(); let g=null, tap=null;
     const begin=()=>{ g={px:V.px, py:V.py, z:V.z, pts:new Map(pts)}; };
     st.addEventListener('pointerdown',e=>{ if(e.target.closest('.zoomc')) return;
       try{ st.setPointerCapture(e.pointerId); }catch(_){}
-      pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); begin(); });
+      pts.set(e.pointerId,{x:e.clientX,y:e.clientY}); begin();
+      if(pts.size===1){ tap={x:e.clientX,y:e.clientY,moved:0};
+        if(TOOL==='hl'||TOOL==='ar'){ const p=toPage(e.clientX,e.clientY), s=V.fit*V.z;
+          DRAFT={id:'m'+Date.now(), t:TOOL, c:COLORS[HUE][TOOL], x1:p.x, y1:p.y, x2:p.x, y2:p.y, w:clampW(TOOL,(TOOL==='hl'?14:3)/s), ts:Date.now()}; } }
+      else { DRAFT=null; tap=null; paintMarks(); }              // a second finger: it is a pinch, not a mark
+    });
     st.addEventListener('pointermove',e=>{ if(!pts.has(e.pointerId)||!g) return;
+      const prev=pts.get(e.pointerId); if(tap) tap.moved+=Math.abs(e.clientX-prev.x)+Math.abs(e.clientY-prev.y);
       pts.set(e.pointerId,{x:e.clientX,y:e.clientY});
+      if(DRAFT && pts.size===1){ const p=toPage(e.clientX,e.clientY); DRAFT.x2=p.x; DRAFT.y2=p.y; snap(DRAFT); paintMarks(); return; }
+      if(pts.size===1 && TOOL!=='move') return;                // note / eraser: one finger only taps
       const ids=[...pts.keys()], r=st.getBoundingClientRect();
       if(ids.length>=2){ const a=pts.get(ids[0]), b=pts.get(ids[1]), a0=g.pts.get(ids[0]), b0=g.pts.get(ids[1]); if(!a0||!b0) return;
         const k=(Math.hypot(b.x-a.x,b.y-a.y)||1)/(Math.hypot(b0.x-a0.x,b0.y-a0.y)||1);
@@ -283,14 +379,19 @@
       } else { const p0=g.pts.get(e.pointerId); if(!p0) return; V.px=g.px+(e.clientX-p0.x); V.py=g.py+(e.clientY-p0.y); }
       queue(); });
     const up=e=>{ if(!pts.has(e.pointerId)) return; pts.delete(e.pointerId);
-      if(pts.size) begin(); else { g=null; render(); } };
+      if(DRAFT && !pts.size){ const s=V.fit*V.z, len=Math.hypot(DRAFT.x2-DRAFT.x1, DRAFT.y2-DRAFT.y1)*s;
+        const m=DRAFT; DRAFT=null; if(len>8) setMarks(marksOf().concat([m])); else paintMarks(); g=null; tap=null; return; }
+      if(!pts.size && tap && tap.moved<8 && e.type==='pointerup'){
+        if(TOOL==='tx') textAt(e.clientX,e.clientY); else if(TOOL==='er') eraseAt(e.clientX,e.clientY); }
+      if(pts.size) begin(); else { g=null; tap=null; render(); } };
     st.addEventListener('pointerup',up); st.addEventListener('pointercancel',up);
-    st.addEventListener('wheel',e=>{ e.preventDefault(); zoomAt(e.deltaY>0?1/1.15:1.15, e.clientX, e.clientY); render(); },{passive:false});
+    st.addEventListener('wheel',e=>{ e.preventDefault(); zoomAt(e.deltaY>0?1/1.15:1.15, e.clientX, e.clientY); paintMarks(); render(); },{passive:false});
     const mid=()=>{ const r=st.getBoundingClientRect(); return [r.left+r.width/2, r.top+r.height/2]; };
-    $('dzIn').onclick=()=>{ zoomAt(1.5,...mid()); render(); };
-    $('dzOut').onclick=()=>{ zoomAt(1/1.5,...mid()); render(); };
-    $('dzFit').onclick=()=>{ fitPage(); render(); };
+    $('dzIn').onclick=()=>{ zoomAt(1.5,...mid()); paintMarks(); render(); };
+    $('dzOut').onclick=()=>{ zoomAt(1/1.5,...mid()); paintMarks(); render(); };
+    $('dzFit').onclick=()=>{ fitPage(); paintMarks(); render(); };
     let rz=0; window.addEventListener('resize',()=>{ if($('drw').hidden) return; clearTimeout(rz); rz=setTimeout(()=>{ fitPage(); render(); },200); });
+    paintTools();
   })();
 
   /* ---- revised pull sheet: what changed, said once, on the sheet itself (0.4) ---- */
@@ -396,6 +497,7 @@
       if(!c.meta.project && F.project) c.meta.project=F.project;
       c.parts=Object.assign({}, c.parts||{});
       const replaced=!!c.parts[part];
+      if(replaced) LS.set('avi_marks_note_'+k+'|'+part,'1');       // 0.6: the old marks stay; say so once
       c.parts[part]={name:f.name, addedAt:nowStamp(), label:F.kind?PART_NAME[F.kind]:f.name.replace(/\.pdf$/i,'')};
       c.openedAt=Date.now(); cards[k]=c; touched.add(k); lastKey=k; if(!lastPart) lastPart=part;
       ops.push(['files','put',k+'|'+part,{name:f.name, buf, addedAt:nowStamp()}]);
